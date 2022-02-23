@@ -17,7 +17,18 @@ class ZTPromise {
       // 状态判断
       if (this.status === PROMISE_STATUS_PENDING) {
         this.status = PROMISE_STATUS_FULFILLED
-        this.value = value
+        // 这里直接调用onFulfilled时会报错，因为new的时候还没有执行.then方法
+        // 使用定时器，不阻塞主线程
+        // setTimeout(() => {
+        //   this.status = PROMISE_STATUS_FULFILLED
+        //   this.value = value
+        //   this.onFulfilled(this.value)
+        // }, 0)
+        // 但是setTimeout是一个宏任务，这里最好还是使用微任务
+        queueMicrotask(() => {
+          this.value = value
+          this.onFulfilled(this.value)
+        })
       }
     }
 
@@ -25,11 +36,20 @@ class ZTPromise {
       // 状态判断
       if (this.status === PROMISE_STATUS_PENDING) {
         this.status = PROMISE_STATUS_REJECTED
-        this.reason = reason
+        // 同理
+        queueMicrotask(() => {
+          this.reason = reason
+          this.onRejected(this.reason)
+        })
       }
     }
 
     executor(resolve, reject)
+  }
+
+  then(onFulfilled, onRejected) {
+    this.onFulfilled = onFulfilled
+    this.onRejected = onRejected
   }
 }
 
@@ -39,7 +59,18 @@ const promise = new ZTPromise((resolve, reject) => {
 })
 
 promise.then(res => {
-
+  console.log('res1:', res)
 }, err => {
-
+  console.log('err1:', err)
 })
+
+// 多次调用then方法
+promise.then(res => {
+  console.log('res2:', res)
+}, err => {
+  console.log('err2:', err)
+})
+
+// 还存在的问题
+// 1、多次调用then方法时，后面的then方法会覆盖前面的方法
+// 2、无法进行链式调用
