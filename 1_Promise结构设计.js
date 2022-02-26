@@ -5,6 +5,7 @@ const PROMISE_STATUS_PENDING = 'pending'
 const PROMISE_STATUS_FULFILLED = 'fulfilled'
 const PROMISE_STATUS_REJECTED = 'rejected'
 
+// hello world
 class ZTPromise {
   constructor(executor) {
     // 默认pending状态
